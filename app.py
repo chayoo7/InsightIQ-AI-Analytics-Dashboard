@@ -1,11 +1,13 @@
-
 from pathlib import Path
 from io import BytesIO
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import hashlib
+import json
 
+from ai_analyst import prepare_business_context, ask_ai
 
 # --------------------------------------------------
 # APP CONFIGURATION
@@ -28,7 +30,7 @@ SAMPLE_FILE = Path(__file__).parent / "data" / "sales.csv"
 def clean_data(raw_df):
     df = raw_df.copy()
 
-    
+   
     df.columns = (
         df.columns.str.strip().str.lower().str.replace(" ", "_")
     )
@@ -353,3 +355,107 @@ with st.expander("View Data Quality Summary"):
     st.write(f"Rows matching current filters: {len(filtered):,}")
 
 st.caption("InsightIQ | Phase 2 — Advanced Data Analytics")
+
+# --------------------------------------------------
+# PHASE 3 — AI DATA ANALYST CHATBOT
+# --------------------------------------------------
+
+st.divider()
+st.subheader("🤖 InsightIQ AI Data Analyst")
+
+st.write(
+    "Ask questions about your filtered sales data. "
+    "The AI will explain insights using verified business metrics."
+)
+
+
+try:
+    business_context = prepare_business_context(filtered)
+except ValueError as exc:
+    st.warning(str(exc))
+    st.stop()
+
+
+context_json = json.dumps(
+    business_context, sort_keys=True
+)
+
+context_id = hashlib.sha256(
+    context_json.encode("utf-8")
+).hexdigest()
+
+
+if st.session_state.get("ai_context_id") != context_id:
+    st.session_state.ai_context_id = context_id
+    st.session_state.ai_messages = []
+
+if "ai_messages" not in st.session_state:
+    st.session_state.ai_messages = []
+
+
+for message in st.session_state.ai_messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+
+st.caption("Try asking:")
+st.info(
+    "Which region has the highest revenue?  |  "
+    "Which category is most profitable?  |  "
+    "What recommendations can improve profitability?"
+)
+
+
+question = st.chat_input(
+    "Ask InsightIQ about your sales data..."
+)
+
+if question:
+    with st.chat_message("user"):
+        st.markdown(question)
+
+    st.session_state.ai_messages.append({
+        "role": "user",
+        "content": question
+    })
+
+    with st.chat_message("assistant"):
+        try:
+            api_key = st.secrets["OPENAI_API_KEY"]
+
+            with st.spinner("Analyzing your business data..."):
+                answer = ask_ai(
+                    question=question,
+                    context=business_context,
+                    api_key=api_key
+                )
+
+            st.markdown(answer)
+
+        except KeyError:
+            answer = (
+                "OpenAI API key not found. "
+                "Add OPENAI_API_KEY to "
+                ".streamlit/secrets.toml and restart Streamlit."
+            )
+            st.error(answer)
+
+        except Exception as exc:
+            
+            answer = (
+                "The AI request could not be completed. "
+                "Check your API key, billing, model access, "
+                "and internet connection."
+            )
+            st.error(answer)
+            print(f"AI request error: {type(exc).__name__}")
+
+    st.session_state.ai_messages.append({
+        "role": "assistant",
+        "content": answer
+    })
+
+
+if st.button("Clear AI Conversation"):
+    st.session_state.ai_messages = []
+    st.rerun()
