@@ -1,0 +1,14 @@
+
+order_date,order_id,region,category,sales,profit
+2026-01-05,ORD001,East,Electronics,1200,250
+2026-01-18,ORD002,West,Furniture,850,110
+2026-02-03,ORD003,South,Electronics,1700,370
+2026-02-14,ORD004,Central,Clothing,450,75
+2026-03-02,ORD005,East,Furniture,2100,400
+2026-03-20,ORD006,West,Electronics,2400,540
+2026-04-06,ORD007,South,Clothing,650,95
+2026-04-21,ORD008,Central,Furniture,1300,240
+2026-05-09,ORD009,East,Electronics,2850,660
+2026-05-23,ORD010,West,Clothing,780,140
+2026-06-10,ORD011,South,Furniture,1550,280
+2026-06-22,ORD012,Central,Electronics,3250,760
