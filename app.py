@@ -28,7 +28,7 @@ SAMPLE_FILE = Path(__file__).parent / "data" / "sales.csv"
 def clean_data(raw_df):
     df = raw_df.copy()
 
-    # Standardize column names
+    
     df.columns = (
         df.columns.str.strip().str.lower().str.replace(" ", "_")
     )
@@ -44,7 +44,7 @@ def clean_data(raw_df):
 
     original_rows = len(df)
 
-    # Convert dates and numeric values
+    
     df["order_date"] = pd.to_datetime(
         df["order_date"], errors="coerce", format="%Y-%m-%d"
     )
@@ -52,15 +52,15 @@ def clean_data(raw_df):
     for col in ["sales", "profit"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # Remove rows that cannot be used for analysis
+    
     df = df.dropna(subset=REQUIRED_COLUMNS).copy()
 
-    # Standardize categorical text
+    
     for col in ["region", "category"]:
         df[col] = df[col].astype(str).str.strip()
         df = df[df[col] != ""]
 
-    # Optional order identifiers
+    
     if "order_id" in df.columns:
         df["order_id"] = df["order_id"].astype("string").str.strip()
         df["order_id"] = df["order_id"].replace("", pd.NA)
@@ -185,12 +185,12 @@ total_revenue = filtered["sales"].sum()
 total_profit = filtered["profit"].sum()
 
 if "order_id" in filtered.columns:
-    # Count unique known order IDs.
+    
     known_orders = filtered["order_id"].dropna().nunique()
     missing_ids = filtered["order_id"].isna().sum()
     total_orders = known_orders + missing_ids
 else:
-    # Without IDs, each row is treated as a transaction.
+    
     total_orders = len(filtered)
 
 profit_margin = (
